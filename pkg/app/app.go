@@ -10,7 +10,7 @@ import (
 )
 
 func Start() {
-	db, err := db.NewDBContext("SOMETHING")
+	db, err := db.NewDBContext("postgresql://postgres:Salmon123@localhost:5432/library?sslmode=disable")
 	if err != nil {
 		fmt.Println(err)
 		return
@@ -20,7 +20,8 @@ func Start() {
 	usvc := services.NewUsersService(urepo)
 	uhndl := users.NewUsersHandler(usvc)
 
-	http.HandleFunc("/users", uhndl.UsersHandlerFunc)
+	http.HandleFunc("/users", uhndl.CreateUsersHandlerFunc)
+	http.HandleFunc("/users/", uhndl.UsersHandlerFunc)
 	// http.HandleFunc("/books", booksHandler)
 	// http.HandleFunc("/borrows", borrowHandler)
 

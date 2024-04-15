@@ -1,4 +1,4 @@
-package users
+package db
 
 import "time"
 

@@ -25,8 +25,8 @@ func (svc *UsersService) CreateUser(ctx context.Context, email string) (users.Us
 	return res, nil
 }
 
-func (svc *UsersService) DeleteUser(ctx context.Context, email string) (users.User, error) {
-	res, err := svc.repo.Delete(ctx, email)
+func (svc *UsersService) DeleteUser(ctx context.Context, Id string) (users.User, error) {
+	res, err := svc.repo.Delete(ctx, Id)
 	if err != nil {
 		fmt.Println(err)
 		return users.User{}, err

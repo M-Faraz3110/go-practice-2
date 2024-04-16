@@ -18,4 +18,9 @@ type IRepository interface {
 		ctx context.Context,
 		id string,
 	) (Book, error)
+
+	Get(
+		ctx context.Context,
+		id string,
+	) (Book, error)
 }

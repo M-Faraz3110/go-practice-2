@@ -3,6 +3,11 @@ package users
 import "context"
 
 type IRepository interface {
+	Get(
+		ctx context.Context,
+		id string,
+	) (User, error)
+
 	Create(
 		ctx context.Context,
 		email string,

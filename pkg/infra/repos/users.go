@@ -22,20 +22,31 @@ var _ users.IRepository = (*UsersRepository)(nil)
 
 // Create implements users.IRepository.
 func (u *UsersRepository) Create(ctx context.Context, email string) (users.User, error) {
+	tx, err := u.db.BeginTx(ctx, nil)
+	if err != nil {
+		return users.User{}, err
+	}
 	id := uuid.NewV4()
 	time := time.Now().UTC()
-	res := u.db.QueryRowContext(ctx, insertUserQuery, id, email, time, time) //?... create a trigger later
+	res := tx.QueryRowContext(ctx, insertUserQuery, id, email, time, time) //?... create a trigger later
 	// if err != nil {
 	// 	return users.User{}, err
 	// }
 	usr := db.User{}
-	err := res.Scan(&usr.Id, &usr.Email, &usr.CreatedAt, &usr.UpdatedAt)
+	err = res.Scan(&usr.Id, &usr.Email, &usr.Deleted, &usr.CreatedAt, &usr.UpdatedAt)
 	if err != nil {
+		tx.Rollback()
+		return users.User{}, err
+	}
+	err = tx.Commit()
+	if err != nil {
+		tx.Rollback()
 		return users.User{}, err
 	}
 	return users.User{
 		Id:        usr.Id,
 		Email:     usr.Email,
+		Deleted:   usr.Deleted,
 		CreatedAt: usr.CreatedAt,
 		UpdatedAt: usr.UpdatedAt,
 	}, nil
@@ -43,10 +54,15 @@ func (u *UsersRepository) Create(ctx context.Context, email string) (users.User,
 
 // Delete implements users.IRepository.
 func (u *UsersRepository) Delete(ctx context.Context, id string) (users.User, error) {
-	res := u.db.QueryRowContext(ctx, deleteUserQuery, id)
-	usr := db.User{}
-	err := res.Scan(&usr.Id, &usr.Email, &usr.CreatedAt, &usr.UpdatedAt)
+	tx, err := u.db.BeginTx(ctx, nil)
 	if err != nil {
+		return users.User{}, err
+	}
+	res := tx.QueryRowContext(ctx, deleteUserQuery, id)
+	usr := db.User{}
+	err = res.Scan(&usr.Id, &usr.Email, &usr.Deleted, &usr.CreatedAt, &usr.UpdatedAt)
+	if err != nil {
+		tx.Rollback()
 		return users.User{}, err
 	}
 	return users.User{
@@ -60,6 +76,22 @@ func (u *UsersRepository) Delete(ctx context.Context, id string) (users.User, er
 // Update implements users.IRepository.
 func (u *UsersRepository) Update(ctx context.Context, id string, email string) (users.User, error) {
 	panic("unimplemented")
+}
+
+// Get implements users.IRepository.
+func (u *UsersRepository) Get(ctx context.Context, id string) (users.User, error) {
+	res := u.db.QueryRowContext(ctx, getUserQuery, id)
+	usr := db.User{}
+	err := res.Scan(&usr.Id, &usr.Email, &usr.Deleted, &usr.CreatedAt, &usr.UpdatedAt)
+	if err != nil {
+		return users.User{}, err
+	}
+	return users.User{
+		Id:        usr.Id,
+		Email:     usr.Email,
+		CreatedAt: usr.CreatedAt,
+		UpdatedAt: usr.UpdatedAt,
+	}, nil
 }
 
 const (
@@ -78,5 +110,10 @@ const (
 		SET deleted = true
 	WHERE id = $1
 	RETURNING *
+	`
+
+	getUserQuery = `
+	SELECT * FROM users
+	WHERE id = $1
 	`
 )

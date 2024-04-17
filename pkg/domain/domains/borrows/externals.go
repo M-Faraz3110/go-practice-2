@@ -7,10 +7,20 @@ type IRepository interface {
 		ctx context.Context,
 		bookId string,
 		userId string,
-	) (Borrowed, error)
+	) (Borrow, error)
 
 	Returned(
 		ctx context.Context,
 		borrowId string,
-	) (Borrowed, error)
+	) (Borrow, error)
+
+	CountBorrowsByBook(
+		ctx context.Context,
+		id string,
+	) (int, error)
+
+	CountBorrowsByUser(
+		ctx context.Context,
+		id string,
+	) (int, error)
 }

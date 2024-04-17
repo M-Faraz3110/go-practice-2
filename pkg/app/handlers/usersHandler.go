@@ -30,7 +30,12 @@ func (hndl *UsersHandler) CreateUsersHandlerFunc(w http.ResponseWriter, r *http.
 				fmt.Fprintln(w, err) //change to JSON
 				return
 			}
-			res, err := hndl.svc.CreateUser(context.TODO(), req.Email)
+			if req.Email == nil {
+				w.WriteHeader(400)
+				fmt.Println(w, "attributes missing")
+				return
+			}
+			res, err := hndl.svc.CreateUser(context.TODO(), *req.Email)
 			if err != nil {
 				w.WriteHeader(400)
 				fmt.Fprintln(w, err)
@@ -53,8 +58,11 @@ func (hndl *UsersHandler) CreateUsersHandlerFunc(w http.ResponseWriter, r *http.
 			w.Write(resp)
 		}
 	default:
-		w.WriteHeader(405)
-		fmt.Fprintln(w, "Method not allowed, only POST allowed for this endpoint")
+		{
+			w.WriteHeader(405)
+			fmt.Fprintln(w, "Method not allowed, only POST allowed for this endpoint")
+		}
+
 	}
 
 }

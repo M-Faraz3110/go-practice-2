@@ -7,25 +7,38 @@ import (
 	"go-practice/pkg/infra/db"
 	"go-practice/pkg/infra/repos"
 	"net/http"
+	"os"
+
+	"github.com/joho/godotenv"
 )
 
 func Start() {
-	db, err := db.NewDBContext("postgresql://postgres:Salmon123@localhost:5432/library?sslmode=disable")
+	err := godotenv.Load("./config/.env")
+	if err != nil {
+		panic("error loading .env file")
+	}
+
+	connString, ok := os.LookupEnv("DB_CONN_STRING")
+	if !ok {
+		panic("DB conn string not provided")
+	}
+
+	db, err := db.NewDBContext(connString)
 	if err != nil {
 		fmt.Println(err)
 		return
 	}
 
 	urepo := repos.NewUsersRepository(db)
-	usvc := services.NewUsersService(urepo)
-	uhndl := handlers.NewUsersHandler(usvc)
-
 	brepo := repos.NewBooksRepository(db)
-	bsvc := services.NewBooksService(brepo)
-	bhndl := handlers.NewBooksHandler(bsvc)
-
 	brrepo := repos.NewBorrowsRepository(db)
-	brsvc := services.NewBorrowsService(brrepo)
+
+	usvc := services.NewUsersService(urepo, brrepo)
+	bsvc := services.NewBooksService(brepo, brrepo)
+	brsvc := services.NewBorrowsService(urepo, brepo, brrepo)
+
+	uhndl := handlers.NewUsersHandler(usvc)
+	bhndl := handlers.NewBooksHandler(bsvc)
 	brhndl := handlers.NewBorrowsHandler(brsvc)
 
 	http.HandleFunc("/users", uhndl.CreateUsersHandlerFunc)

@@ -3,7 +3,7 @@ package dto
 import "time"
 
 type CreateUserRequest struct {
-	Email string `json:"email"`
+	Email *string `json:"email"`
 }
 
 type User struct {

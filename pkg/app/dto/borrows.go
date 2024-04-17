@@ -1,6 +1,11 @@
-package borrows
+package dto
 
 import "time"
+
+type CreateBorrowData struct {
+	UserId *string `json:"userId"`
+	BookId *string `json:"bookId"`
+}
 
 type Borrow struct {
 	Id        string

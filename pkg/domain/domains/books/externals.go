@@ -5,13 +5,17 @@ import "context"
 type IRepository interface {
 	Create(
 		ctx context.Context,
-		book CreateBookData,
+		title string,
+		author string,
+		count int,
 	) (Book, error)
 
 	Update(
 		ctx context.Context,
 		id string,
-		book UpdateBookData,
+		title string,
+		author string,
+		count int,
 	) (Book, error)
 
 	Delete(
@@ -23,4 +27,9 @@ type IRepository interface {
 		ctx context.Context,
 		id string,
 	) (Book, error)
+
+	BorrowBook(
+		ctx context.Context,
+		bookId string,
+	) error
 }

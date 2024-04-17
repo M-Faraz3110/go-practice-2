@@ -58,9 +58,15 @@ func (u *UsersRepository) Delete(ctx context.Context, id string) (users.User, er
 	if err != nil {
 		return users.User{}, err
 	}
-	res := tx.QueryRowContext(ctx, deleteUserQuery, id)
+	time := time.Now().UTC()
+	res := tx.QueryRowContext(ctx, deleteUserQuery, id, time) //check if all borrows returned
 	usr := db.User{}
 	err = res.Scan(&usr.Id, &usr.Email, &usr.Deleted, &usr.CreatedAt, &usr.UpdatedAt)
+	if err != nil {
+		tx.Rollback()
+		return users.User{}, err
+	}
+	err = tx.Commit()
 	if err != nil {
 		tx.Rollback()
 		return users.User{}, err
@@ -107,7 +113,7 @@ const (
 
 	deleteUserQuery = `
 	UPDATE users 
-		SET deleted = true
+		SET deleted = true, updated_at = $2
 	WHERE id = $1
 	RETURNING *
 	`
@@ -115,5 +121,6 @@ const (
 	getUserQuery = `
 	SELECT * FROM users
 	WHERE id = $1
+	FOR UPDATE
 	`
 )

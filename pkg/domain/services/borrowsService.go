@@ -18,7 +18,13 @@ type BorrowsService struct {
 	msgChannel *rmq.RMQConnection
 }
 
-func NewBorrowsService(urepo users.IRepository, brepo books.IRepository, brrepo borrows.IRepository, txHandler integrations.ITransaction, msgChannel *rmq.RMQConnection) *BorrowsService {
+func NewBorrowsService(
+	urepo users.IRepository,
+	brepo books.IRepository,
+	brrepo borrows.IRepository,
+	txHandler integrations.ITransaction,
+	msgChannel *rmq.RMQConnection,
+) *BorrowsService {
 	return &BorrowsService{
 		urepo:      urepo,
 		brepo:      brepo,
@@ -28,7 +34,11 @@ func NewBorrowsService(urepo users.IRepository, brepo books.IRepository, brrepo 
 	}
 }
 
-func (svc *BorrowsService) CreateBorrow(ctx context.Context, userId string, bookId string) (borrows.Borrow, error) {
+func (svc *BorrowsService) CreateBorrow(
+	ctx context.Context,
+	userId string,
+	bookId string,
+) (borrows.Borrow, error) {
 	tx, err := svc.txHandler.BeginTx(ctx)
 	defer svc.txHandler.RollbackTx(tx) //cant roll back a committed transaction anyway
 	if err != nil {
@@ -81,7 +91,10 @@ func (svc *BorrowsService) CreateBorrow(ctx context.Context, userId string, book
 	return res, nil
 }
 
-func (svc *BorrowsService) ReturnBorrow(ctx context.Context, borrowId string) (borrows.Borrow, error) {
+func (svc *BorrowsService) ReturnBorrow(
+	ctx context.Context,
+	borrowId string,
+) (borrows.Borrow, error) {
 	res, err := svc.brrepo.Returned(ctx, borrowId)
 	if err != nil {
 		fmt.Println(err)

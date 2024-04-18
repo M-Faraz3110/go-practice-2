@@ -14,7 +14,11 @@ type BooksService struct {
 	msgChannel *rmq.RMQConnection
 }
 
-func NewBooksService(brepo books.IRepository, brrepo borrows.IRepository, msgChannel *rmq.RMQConnection) *BooksService {
+func NewBooksService(
+	brepo books.IRepository,
+	brrepo borrows.IRepository,
+	msgChannel *rmq.RMQConnection,
+) *BooksService {
 	return &BooksService{
 		brepo:      brepo,
 		brrepo:     brrepo,
@@ -22,7 +26,12 @@ func NewBooksService(brepo books.IRepository, brrepo borrows.IRepository, msgCha
 	}
 }
 
-func (svc *BooksService) CreateBook(ctx context.Context, title string, author string, count int) (books.Book, error) {
+func (svc *BooksService) CreateBook(
+	ctx context.Context,
+	title string,
+	author string,
+	count int,
+) (books.Book, error) {
 	res, err := svc.brepo.Create(ctx, title, author, count)
 	if err != nil {
 		fmt.Println(err)
@@ -35,7 +44,10 @@ func (svc *BooksService) CreateBook(ctx context.Context, title string, author st
 	return res, nil
 }
 
-func (svc *BooksService) DeleteBook(ctx context.Context, id string) (books.Book, error) {
+func (svc *BooksService) DeleteBook(
+	ctx context.Context,
+	id string,
+) (books.Book, error) {
 	//check if no unreturned borrows
 	count, err := svc.brrepo.CountBorrowsByBook(ctx, id)
 	if err != nil {

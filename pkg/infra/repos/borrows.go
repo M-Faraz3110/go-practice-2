@@ -21,12 +21,22 @@ func NewBorrowsRepository(db *sql.DB) *BorrowsRepository {
 var _ borrows.IRepository = (*BorrowsRepository)(nil)
 
 // Borrow implements borrows.IRepository.
-func (b *BorrowsRepository) Borrow(ctx context.Context, bookId string, userId string, tx *sql.Tx) (borrows.Borrow, error) {
+func (b *BorrowsRepository) Borrow(
+	ctx context.Context,
+	bookId string,
+	userId string,
+	tx *sql.Tx,
+) (borrows.Borrow, error) {
 	id := uuid.NewV4()
 	time := time.Now().UTC()
 	res := tx.QueryRowContext(ctx, insertBorrowQuery, id, bookId, userId, time, time)
 	borrow := db.Borrow{}
-	err := res.Scan(&borrow.Id, &borrow.BookId, &borrow.UserId, &borrow.Returned, &borrow.CreatedAt, &borrow.UpdatedAt)
+	err := res.Scan(
+		&borrow.Id,
+		&borrow.BookId,
+		&borrow.UserId,
+		&borrow.Returned,
+		&borrow.CreatedAt, &borrow.UpdatedAt)
 	if err != nil {
 		return borrows.Borrow{}, err
 	}
@@ -42,7 +52,10 @@ func (b *BorrowsRepository) Borrow(ctx context.Context, bookId string, userId st
 }
 
 // Returned implements borrows.IRepository.
-func (b *BorrowsRepository) Returned(ctx context.Context, borrowId string) (borrows.Borrow, error) {
+func (b *BorrowsRepository) Returned(
+	ctx context.Context,
+	borrowId string,
+) (borrows.Borrow, error) {
 	tx, err := b.db.BeginTx(ctx, nil)
 	defer tx.Rollback()
 	if err != nil {
@@ -51,7 +64,12 @@ func (b *BorrowsRepository) Returned(ctx context.Context, borrowId string) (borr
 	time := time.Now().UTC()
 	res := tx.QueryRowContext(ctx, returnBorrowQuery, borrowId, time)
 	borrow := db.Borrow{}
-	err = res.Scan(&borrow.Id, &borrow.BookId, &borrow.UserId, &borrow.Returned, &borrow.CreatedAt, &borrow.UpdatedAt)
+	err = res.Scan(
+		&borrow.Id,
+		&borrow.BookId,
+		&borrow.UserId,
+		&borrow.Returned,
+		&borrow.CreatedAt, &borrow.UpdatedAt)
 	if err != nil {
 		return borrows.Borrow{}, err
 	}
@@ -70,7 +88,10 @@ func (b *BorrowsRepository) Returned(ctx context.Context, borrowId string) (borr
 }
 
 // GetBorrowsByBook implements borrows.IRepository.
-func (b *BorrowsRepository) CountBorrowsByBook(ctx context.Context, id string) (int, error) {
+func (b *BorrowsRepository) CountBorrowsByBook(
+	ctx context.Context,
+	id string,
+) (int, error) {
 	var count int
 	res := b.db.QueryRowContext(ctx, getBorrowsByBook, id)
 	err := res.Scan(&count)
@@ -81,7 +102,10 @@ func (b *BorrowsRepository) CountBorrowsByBook(ctx context.Context, id string) (
 }
 
 // CountBorrowsByUser implements borrows.IRepository.
-func (b *BorrowsRepository) CountBorrowsByUser(ctx context.Context, id string) (int, error) {
+func (b *BorrowsRepository) CountBorrowsByUser(
+	ctx context.Context,
+	id string,
+) (int, error) {
 	var count int
 	res := b.db.QueryRowContext(ctx, getBorrowsByUser, id)
 	err := res.Scan(&count)

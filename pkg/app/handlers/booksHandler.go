@@ -18,7 +18,10 @@ func NewBooksHandler(svc *services.BooksService) *BooksHandler {
 	return &BooksHandler{svc: svc}
 }
 
-func (hndl *BooksHandler) CreateBooksHandlerFunc(w http.ResponseWriter, r *http.Request) {
+func (hndl *BooksHandler) CreateBooksHandlerFunc(
+	w http.ResponseWriter,
+	r *http.Request,
+) {
 	switch r.Method {
 	case http.MethodPost:
 		{
@@ -34,7 +37,12 @@ func (hndl *BooksHandler) CreateBooksHandlerFunc(w http.ResponseWriter, r *http.
 				fmt.Fprintln(w, "attributes missing")
 				return
 			}
-			res, err := hndl.svc.CreateBook(context.TODO(), *req.Title, *req.Author, *req.Count)
+			res, err := hndl.svc.CreateBook(
+				context.TODO(),
+				*req.Title,
+				*req.Author,
+				*req.Count,
+			)
 			if err != nil {
 				w.WriteHeader(400)
 				fmt.Fprintln(w, err.Error())
@@ -67,7 +75,10 @@ func (hndl *BooksHandler) CreateBooksHandlerFunc(w http.ResponseWriter, r *http.
 	}
 }
 
-func (hndl *BooksHandler) BooksHandlerFunc(w http.ResponseWriter, r *http.Request) {
+func (hndl *BooksHandler) BooksHandlerFunc(
+	w http.ResponseWriter,
+	r *http.Request,
+) {
 	var resp []byte
 	switch r.Method {
 	case http.MethodDelete:

@@ -18,7 +18,10 @@ func NewUsersHandler(svc *services.UsersService) *UsersHandler {
 	return &UsersHandler{svc: svc}
 }
 
-func (hndl *UsersHandler) CreateUsersHandlerFunc(w http.ResponseWriter, r *http.Request) {
+func (hndl *UsersHandler) CreateUsersHandlerFunc(
+	w http.ResponseWriter,
+	r *http.Request,
+) {
 	//var resp []byte
 	switch r.Method {
 	case http.MethodPost:
@@ -67,7 +70,10 @@ func (hndl *UsersHandler) CreateUsersHandlerFunc(w http.ResponseWriter, r *http.
 
 }
 
-func (hndl *UsersHandler) UsersHandlerFunc(w http.ResponseWriter, r *http.Request) {
+func (hndl *UsersHandler) UsersHandlerFunc(
+	w http.ResponseWriter,
+	r *http.Request,
+) {
 	var resp []byte
 	switch r.Method {
 	case http.MethodDelete:

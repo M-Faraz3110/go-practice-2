@@ -18,7 +18,10 @@ func NewBorrowsHandler(svc *services.BorrowsService) *BorrowsHandler {
 	return &BorrowsHandler{svc: svc}
 }
 
-func (hndl *BorrowsHandler) CreateBorrowHandlerFunc(w http.ResponseWriter, r *http.Request) {
+func (hndl *BorrowsHandler) CreateBorrowHandlerFunc(
+	w http.ResponseWriter,
+	r *http.Request,
+) {
 	switch r.Method {
 	case http.MethodPost:
 		{
@@ -66,7 +69,10 @@ func (hndl *BorrowsHandler) CreateBorrowHandlerFunc(w http.ResponseWriter, r *ht
 	}
 }
 
-func (hndl *BorrowsHandler) BorrowHandlerFunc(w http.ResponseWriter, r *http.Request) {
+func (hndl *BorrowsHandler) BorrowHandlerFunc(
+	w http.ResponseWriter,
+	r *http.Request,
+) {
 	var resp []byte
 	switch r.Method {
 	case http.MethodDelete:

@@ -21,7 +21,12 @@ func NewBooksRepository(db *sql.DB) *BooksRepository {
 var _ books.IRepository = (*BooksRepository)(nil)
 
 // Create implements books.IRepository.
-func (b *BooksRepository) Create(ctx context.Context, title string, author string, count int) (books.Book, error) {
+func (b *BooksRepository) Create(
+	ctx context.Context,
+	title string,
+	author string,
+	count int,
+) (books.Book, error) {
 	tx, err := b.db.BeginTx(ctx, nil)
 	defer tx.Rollback()
 	if err != nil {
@@ -31,7 +36,15 @@ func (b *BooksRepository) Create(ctx context.Context, title string, author strin
 	time := time.Now().UTC()
 	res := tx.QueryRowContext(ctx, insertBookQuery, id, title, author, count, time, time)
 	book := db.Book{}
-	err = res.Scan(&book.Id, &book.Title, &book.Author, &book.Count, &book.Deleted, &book.CreatedAt, &book.UpdatedAt)
+	err = res.Scan(
+		&book.Id,
+		&book.Title,
+		&book.Author,
+		&book.Count,
+		&book.Deleted,
+		&book.CreatedAt,
+		&book.UpdatedAt,
+	)
 	if err != nil {
 		return books.Book{}, err
 	}
@@ -51,7 +64,10 @@ func (b *BooksRepository) Create(ctx context.Context, title string, author strin
 }
 
 // Delete implements books.IRepository.
-func (b *BooksRepository) Delete(ctx context.Context, id string) (books.Book, error) {
+func (b *BooksRepository) Delete(
+	ctx context.Context,
+	id string,
+) (books.Book, error) {
 	tx, err := b.db.BeginTx(ctx, nil)
 	defer tx.Rollback()
 	if err != nil {
@@ -60,7 +76,12 @@ func (b *BooksRepository) Delete(ctx context.Context, id string) (books.Book, er
 	time := time.Now().UTC()
 	res := tx.QueryRowContext(ctx, deleteBookQuery, id, time) //check if all borrows are returned
 	book := db.Book{}
-	err = res.Scan(&book.Id, &book.Title, &book.Author, &book.Count, &book.Deleted, &book.CreatedAt, &book.UpdatedAt)
+	err = res.Scan(
+		&book.Id,
+		&book.Title,
+		&book.Author,
+		&book.Count,
+		&book.Deleted, &book.CreatedAt, &book.UpdatedAt)
 	if err != nil {
 		return books.Book{}, err
 	}
@@ -80,10 +101,19 @@ func (b *BooksRepository) Delete(ctx context.Context, id string) (books.Book, er
 }
 
 // Get implements books.IRepository.
-func (b *BooksRepository) Get(ctx context.Context, id string, tx *sql.Tx) (books.Book, error) {
+func (b *BooksRepository) Get(
+	ctx context.Context,
+	id string,
+	tx *sql.Tx,
+) (books.Book, error) {
 	res := tx.QueryRowContext(ctx, getBookQuery, id)
 	book := db.Book{}
-	err := res.Scan(&book.Id, &book.Title, &book.Author, &book.Count, &book.Deleted, &book.CreatedAt, &book.UpdatedAt)
+	err := res.Scan(
+		&book.Id,
+		&book.Title,
+		&book.Author,
+		&book.Count,
+		&book.Deleted, &book.CreatedAt, &book.UpdatedAt)
 
 	if err != nil {
 		return books.Book{}, err
@@ -100,12 +130,22 @@ func (b *BooksRepository) Get(ctx context.Context, id string, tx *sql.Tx) (books
 }
 
 // Update implements books.IRepository.
-func (b *BooksRepository) Update(ctx context.Context, id string, title string, auhtor string, count int) (books.Book, error) {
+func (b *BooksRepository) Update(
+	ctx context.Context,
+	id string,
+	title string,
+	auhtor string,
+	count int,
+) (books.Book, error) {
 	panic("unimplemented")
 }
 
 // BorrowBook implements books.IRepository.
-func (b *BooksRepository) BorrowBook(ctx context.Context, bookId string, tx *sql.Tx) error {
+func (b *BooksRepository) BorrowBook(
+	ctx context.Context,
+	bookId string,
+	tx *sql.Tx,
+) error {
 	time := time.Now().UTC()
 	res := tx.QueryRowContext(ctx, borrowBookQuery, bookId, time)
 	book := db.Book{}

@@ -8,7 +8,12 @@ import (
 	"github.com/rabbitmq/amqp091-go"
 )
 
-func (conn *RMQConnection) SendMessage(ctx context.Context, eventBody any, entity string, event string) error {
+func (conn *RMQConnection) SendMessage(
+	ctx context.Context,
+	eventBody any,
+	entity string,
+	event string,
+) error {
 	ch, err := conn.conn.Channel()
 	if err != nil {
 		fmt.Println("failed to open channel")

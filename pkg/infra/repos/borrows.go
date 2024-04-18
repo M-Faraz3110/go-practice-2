@@ -21,21 +21,12 @@ func NewBorrowsRepository(db *sql.DB) *BorrowsRepository {
 var _ borrows.IRepository = (*BorrowsRepository)(nil)
 
 // Borrow implements borrows.IRepository.
-func (b *BorrowsRepository) Borrow(ctx context.Context, bookId string, userId string) (borrows.Borrow, error) {
-	tx, err := b.db.BeginTx(ctx, nil)
-	if err != nil {
-		return borrows.Borrow{}, err
-	}
+func (b *BorrowsRepository) Borrow(ctx context.Context, bookId string, userId string, tx *sql.Tx) (borrows.Borrow, error) {
 	id := uuid.NewV4()
 	time := time.Now().UTC()
 	res := tx.QueryRowContext(ctx, insertBorrowQuery, id, bookId, userId, time, time)
 	borrow := db.Borrow{}
-	err = res.Scan(&borrow.Id, &borrow.BookId, &borrow.UserId, &borrow.Returned, &borrow.CreatedAt, &borrow.UpdatedAt)
-	if err != nil {
-		tx.Rollback()
-		return borrows.Borrow{}, err
-	}
-	err = tx.Commit()
+	err := res.Scan(&borrow.Id, &borrow.BookId, &borrow.UserId, &borrow.Returned, &borrow.CreatedAt, &borrow.UpdatedAt)
 	if err != nil {
 		return borrows.Borrow{}, err
 	}
@@ -53,6 +44,7 @@ func (b *BorrowsRepository) Borrow(ctx context.Context, bookId string, userId st
 // Returned implements borrows.IRepository.
 func (b *BorrowsRepository) Returned(ctx context.Context, borrowId string) (borrows.Borrow, error) {
 	tx, err := b.db.BeginTx(ctx, nil)
+	defer tx.Rollback()
 	if err != nil {
 		return borrows.Borrow{}, err
 	}
@@ -61,7 +53,6 @@ func (b *BorrowsRepository) Returned(ctx context.Context, borrowId string) (borr
 	borrow := db.Borrow{}
 	err = res.Scan(&borrow.Id, &borrow.BookId, &borrow.UserId, &borrow.Returned, &borrow.CreatedAt, &borrow.UpdatedAt)
 	if err != nil {
-		tx.Rollback()
 		return borrows.Borrow{}, err
 	}
 	err = tx.Commit()

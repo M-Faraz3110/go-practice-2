@@ -1,12 +1,16 @@
 package borrows
 
-import "context"
+import (
+	"context"
+	"database/sql"
+)
 
 type IRepository interface {
 	Borrow(
 		ctx context.Context,
 		bookId string,
 		userId string,
+		tx *sql.Tx,
 	) (Borrow, error)
 
 	Returned(

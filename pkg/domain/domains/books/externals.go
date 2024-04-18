@@ -1,6 +1,9 @@
 package books
 
-import "context"
+import (
+	"context"
+	"database/sql"
+)
 
 type IRepository interface {
 	Create(
@@ -26,10 +29,12 @@ type IRepository interface {
 	Get(
 		ctx context.Context,
 		id string,
+		tx *sql.Tx,
 	) (Book, error)
 
 	BorrowBook(
 		ctx context.Context,
 		bookId string,
+		tx *sql.Tx,
 	) error
 }

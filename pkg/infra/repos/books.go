@@ -3,7 +3,6 @@ package repos
 import (
 	"context"
 	"database/sql"
-	"fmt"
 	"go-practice/pkg/domain/domains/books"
 	"go-practice/pkg/infra/db"
 	"time"
@@ -24,6 +23,7 @@ var _ books.IRepository = (*BooksRepository)(nil)
 // Create implements books.IRepository.
 func (b *BooksRepository) Create(ctx context.Context, title string, author string, count int) (books.Book, error) {
 	tx, err := b.db.BeginTx(ctx, nil)
+	defer tx.Rollback()
 	if err != nil {
 		return books.Book{}, err
 	}
@@ -33,12 +33,10 @@ func (b *BooksRepository) Create(ctx context.Context, title string, author strin
 	book := db.Book{}
 	err = res.Scan(&book.Id, &book.Title, &book.Author, &book.Count, &book.Deleted, &book.CreatedAt, &book.UpdatedAt)
 	if err != nil {
-		tx.Rollback()
 		return books.Book{}, err
 	}
 	err = tx.Commit()
 	if err != nil {
-		tx.Rollback()
 		return books.Book{}, err
 	}
 	return books.Book{
@@ -55,6 +53,7 @@ func (b *BooksRepository) Create(ctx context.Context, title string, author strin
 // Delete implements books.IRepository.
 func (b *BooksRepository) Delete(ctx context.Context, id string) (books.Book, error) {
 	tx, err := b.db.BeginTx(ctx, nil)
+	defer tx.Rollback()
 	if err != nil {
 		return books.Book{}, err
 	}
@@ -63,12 +62,10 @@ func (b *BooksRepository) Delete(ctx context.Context, id string) (books.Book, er
 	book := db.Book{}
 	err = res.Scan(&book.Id, &book.Title, &book.Author, &book.Count, &book.Deleted, &book.CreatedAt, &book.UpdatedAt)
 	if err != nil {
-		tx.Rollback()
 		return books.Book{}, err
 	}
 	err = tx.Commit()
 	if err != nil {
-		tx.Rollback()
 		return books.Book{}, err
 	}
 	return books.Book{
@@ -83,8 +80,8 @@ func (b *BooksRepository) Delete(ctx context.Context, id string) (books.Book, er
 }
 
 // Get implements books.IRepository.
-func (b *BooksRepository) Get(ctx context.Context, id string) (books.Book, error) {
-	res := b.db.QueryRowContext(ctx, getBookQuery, id)
+func (b *BooksRepository) Get(ctx context.Context, id string, tx *sql.Tx) (books.Book, error) {
+	res := tx.QueryRowContext(ctx, getBookQuery, id)
 	book := db.Book{}
 	err := res.Scan(&book.Id, &book.Title, &book.Author, &book.Count, &book.Deleted, &book.CreatedAt, &book.UpdatedAt)
 
@@ -108,39 +105,15 @@ func (b *BooksRepository) Update(ctx context.Context, id string, title string, a
 }
 
 // BorrowBook implements books.IRepository.
-func (b *BooksRepository) BorrowBook(ctx context.Context, bookId string) error {
-	tx, err := b.db.BeginTx(ctx, nil)
-	if err != nil {
-		return err
-	}
-	defer tx.Rollback()
-
-	res := tx.QueryRowContext(ctx, getBookQuery, bookId) //lock record
+func (b *BooksRepository) BorrowBook(ctx context.Context, bookId string, tx *sql.Tx) error {
+	time := time.Now().UTC()
+	res := tx.QueryRowContext(ctx, borrowBookQuery, bookId, time)
 	book := db.Book{}
-	err = res.Scan(&book.Id, &book.Title, &book.Author, &book.Count, &book.Deleted, &book.CreatedAt, &book.UpdatedAt)
+	err := res.Scan(&book.Id, &book.Title, &book.Author, &book.Count, &book.Deleted, &book.CreatedAt, &book.UpdatedAt)
 	if err != nil {
-		tx.Rollback()
-		return err
-	}
-	if book.Count > 0 {
-		time := time.Now().UTC()
-		res := tx.QueryRowContext(ctx, borrowBookQuery, bookId, time)
-		err = res.Scan(&book.Id, &book.Title, &book.Author, &book.Count, &book.Deleted, &book.CreatedAt, &book.UpdatedAt)
-		if err != nil {
-			tx.Rollback()
-			return err
-		}
-	} else {
-		tx.Rollback()
-		return fmt.Errorf("no more copies of this book are left")
-	}
-	err = tx.Commit()
-	if err != nil {
-		tx.Rollback()
 		return err
 	}
 	return nil
-
 }
 
 const (

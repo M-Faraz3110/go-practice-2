@@ -6,23 +6,31 @@ import (
 	"go-practice/pkg/domain/domains/books"
 	"go-practice/pkg/domain/domains/borrows"
 	"go-practice/pkg/domain/domains/users"
+	"go-practice/pkg/domain/integrations"
 )
 
 type BorrowsService struct {
-	urepo  users.IRepository
-	brepo  books.IRepository
-	brrepo borrows.IRepository
+	urepo     users.IRepository
+	brepo     books.IRepository
+	brrepo    borrows.IRepository
+	txHandler integrations.ITransaction
 }
 
-func NewBorrowsService(urepo users.IRepository, brepo books.IRepository, brrepo borrows.IRepository) *BorrowsService {
+func NewBorrowsService(urepo users.IRepository, brepo books.IRepository, brrepo borrows.IRepository, txHandler integrations.ITransaction) *BorrowsService {
 	return &BorrowsService{
-		urepo:  urepo,
-		brepo:  brepo,
-		brrepo: brrepo,
+		urepo:     urepo,
+		brepo:     brepo,
+		brrepo:    brrepo,
+		txHandler: txHandler,
 	}
 }
 
 func (svc *BorrowsService) CreateBorrow(ctx context.Context, userId string, bookId string) (borrows.Borrow, error) {
+	tx, err := svc.txHandler.BeginTx(ctx)
+	defer svc.txHandler.RollbackTx(tx) //cant roll back a committed transaction anyway
+	if err != nil {
+		return borrows.Borrow{}, err
+	}
 
 	user, err := svc.urepo.Get(ctx, userId)
 	if err != nil {
@@ -32,7 +40,8 @@ func (svc *BorrowsService) CreateBorrow(ctx context.Context, userId string, book
 	if user.Id == "" {
 		return borrows.Borrow{}, fmt.Errorf("user does not exist")
 	}
-	book, err := svc.brepo.Get(ctx, bookId)
+
+	book, err := svc.brepo.Get(ctx, bookId, tx) //record locked
 	if err != nil {
 		fmt.Println(err)
 		return borrows.Borrow{}, err
@@ -40,14 +49,23 @@ func (svc *BorrowsService) CreateBorrow(ctx context.Context, userId string, book
 	if book.Id == "" {
 		return borrows.Borrow{}, fmt.Errorf("book does not exist")
 	}
+	if book.Count < 1 {
+		return borrows.Borrow{}, fmt.Errorf("no more copies of this book left")
+	}
 
-	res, err := svc.brrepo.Borrow(ctx, bookId, userId)
+	res, err := svc.brrepo.Borrow(ctx, bookId, userId, tx)
 	if err != nil {
 		fmt.Println(err)
 		return borrows.Borrow{}, err
 	}
 
-	err = svc.brepo.BorrowBook(ctx, bookId)
+	err = svc.brepo.BorrowBook(ctx, bookId, tx)
+	if err != nil {
+		fmt.Println(err)
+		return borrows.Borrow{}, err
+	}
+
+	err = svc.txHandler.CommitTx(tx)
 	if err != nil {
 		fmt.Println(err)
 		return borrows.Borrow{}, err

@@ -23,6 +23,7 @@ var _ users.IRepository = (*UsersRepository)(nil)
 // Create implements users.IRepository.
 func (u *UsersRepository) Create(ctx context.Context, email string) (users.User, error) {
 	tx, err := u.db.BeginTx(ctx, nil)
+	defer tx.Rollback()
 	if err != nil {
 		return users.User{}, err
 	}
@@ -35,12 +36,10 @@ func (u *UsersRepository) Create(ctx context.Context, email string) (users.User,
 	usr := db.User{}
 	err = res.Scan(&usr.Id, &usr.Email, &usr.Deleted, &usr.CreatedAt, &usr.UpdatedAt)
 	if err != nil {
-		tx.Rollback()
 		return users.User{}, err
 	}
 	err = tx.Commit()
 	if err != nil {
-		tx.Rollback()
 		return users.User{}, err
 	}
 	return users.User{
@@ -55,6 +54,7 @@ func (u *UsersRepository) Create(ctx context.Context, email string) (users.User,
 // Delete implements users.IRepository.
 func (u *UsersRepository) Delete(ctx context.Context, id string) (users.User, error) {
 	tx, err := u.db.BeginTx(ctx, nil)
+	defer tx.Rollback()
 	if err != nil {
 		return users.User{}, err
 	}
@@ -63,12 +63,10 @@ func (u *UsersRepository) Delete(ctx context.Context, id string) (users.User, er
 	usr := db.User{}
 	err = res.Scan(&usr.Id, &usr.Email, &usr.Deleted, &usr.CreatedAt, &usr.UpdatedAt)
 	if err != nil {
-		tx.Rollback()
 		return users.User{}, err
 	}
 	err = tx.Commit()
 	if err != nil {
-		tx.Rollback()
 		return users.User{}, err
 	}
 	return users.User{

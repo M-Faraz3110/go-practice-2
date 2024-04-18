@@ -23,19 +23,21 @@ func Start() {
 		panic("DB conn string not provided")
 	}
 
-	db, err := db.NewDBContext(connString)
+	dB, err := db.NewDBContext(connString)
 	if err != nil {
 		fmt.Println(err)
 		return
 	}
 
-	urepo := repos.NewUsersRepository(db)
-	brepo := repos.NewBooksRepository(db)
-	brrepo := repos.NewBorrowsRepository(db)
+	txHandler := db.NewTransactionHandler(dB)
+
+	urepo := repos.NewUsersRepository(dB)
+	brepo := repos.NewBooksRepository(dB)
+	brrepo := repos.NewBorrowsRepository(dB)
 
 	usvc := services.NewUsersService(urepo, brrepo)
 	bsvc := services.NewBooksService(brepo, brrepo)
-	brsvc := services.NewBorrowsService(urepo, brepo, brrepo)
+	brsvc := services.NewBorrowsService(urepo, brepo, brrepo, txHandler)
 
 	uhndl := handlers.NewUsersHandler(usvc)
 	bhndl := handlers.NewBooksHandler(bsvc)

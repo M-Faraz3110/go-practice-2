@@ -5,17 +5,20 @@ import (
 	"fmt"
 	"go-practice/pkg/domain/domains/books"
 	"go-practice/pkg/domain/domains/borrows"
+	"go-practice/pkg/infra/rmq"
 )
 
 type BooksService struct {
-	brepo  books.IRepository
-	brrepo borrows.IRepository
+	brepo      books.IRepository
+	brrepo     borrows.IRepository
+	msgChannel *rmq.RMQConnection
 }
 
-func NewBooksService(brepo books.IRepository, brrepo borrows.IRepository) *BooksService {
+func NewBooksService(brepo books.IRepository, brrepo borrows.IRepository, msgChannel *rmq.RMQConnection) *BooksService {
 	return &BooksService{
-		brepo:  brepo,
-		brrepo: brrepo,
+		brepo:      brepo,
+		brrepo:     brrepo,
+		msgChannel: msgChannel,
 	}
 }
 
@@ -25,7 +28,10 @@ func (svc *BooksService) CreateBook(ctx context.Context, title string, author st
 		fmt.Println(err)
 		return books.Book{}, err
 	}
-
+	err = svc.msgChannel.SendMessage(ctx, res, "books", "created")
+	if err != nil {
+		fmt.Println("failed to send message: ", err)
+	}
 	return res, nil
 }
 
@@ -46,6 +52,9 @@ func (svc *BooksService) DeleteBook(ctx context.Context, id string) (books.Book,
 		fmt.Println(err)
 		return books.Book{}, err
 	}
-
+	err = svc.msgChannel.SendMessage(ctx, res, "books", "deleted")
+	if err != nil {
+		fmt.Println("failed to send message: ", err)
+	}
 	return res, nil
 }

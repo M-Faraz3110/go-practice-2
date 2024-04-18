@@ -7,21 +7,24 @@ import (
 	"go-practice/pkg/domain/domains/borrows"
 	"go-practice/pkg/domain/domains/users"
 	"go-practice/pkg/domain/integrations"
+	"go-practice/pkg/infra/rmq"
 )
 
 type BorrowsService struct {
-	urepo     users.IRepository
-	brepo     books.IRepository
-	brrepo    borrows.IRepository
-	txHandler integrations.ITransaction
+	urepo      users.IRepository
+	brepo      books.IRepository
+	brrepo     borrows.IRepository
+	txHandler  integrations.ITransaction
+	msgChannel *rmq.RMQConnection
 }
 
-func NewBorrowsService(urepo users.IRepository, brepo books.IRepository, brrepo borrows.IRepository, txHandler integrations.ITransaction) *BorrowsService {
+func NewBorrowsService(urepo users.IRepository, brepo books.IRepository, brrepo borrows.IRepository, txHandler integrations.ITransaction, msgChannel *rmq.RMQConnection) *BorrowsService {
 	return &BorrowsService{
-		urepo:     urepo,
-		brepo:     brepo,
-		brrepo:    brrepo,
-		txHandler: txHandler,
+		urepo:      urepo,
+		brepo:      brepo,
+		brrepo:     brrepo,
+		txHandler:  txHandler,
+		msgChannel: msgChannel,
 	}
 }
 
@@ -71,6 +74,10 @@ func (svc *BorrowsService) CreateBorrow(ctx context.Context, userId string, book
 		return borrows.Borrow{}, err
 	}
 	//maybe have the transaction here?
+	err = svc.msgChannel.SendMessage(ctx, res, "borrows", "created")
+	if err != nil {
+		fmt.Println("failed to send message: ", err)
+	}
 	return res, nil
 }
 
@@ -80,6 +87,9 @@ func (svc *BorrowsService) ReturnBorrow(ctx context.Context, borrowId string) (b
 		fmt.Println(err)
 		return borrows.Borrow{}, nil
 	}
-
+	err = svc.msgChannel.SendMessage(ctx, res, "borrows", "deleted")
+	if err != nil {
+		fmt.Println("failed to send message: ", err)
+	}
 	return res, nil
 }

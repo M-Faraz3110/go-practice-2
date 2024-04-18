@@ -3,11 +3,11 @@ package books
 import "time"
 
 type Book struct {
-	Id        string
-	Title     string
-	Author    string
-	Count     int
-	Deleted   bool
-	CreatedAt time.Time
-	UpdatedAt time.Time
+	Id        string    `json:"id"`
+	Title     string    `json:"title"`
+	Author    string    `json:"author"`
+	Count     int       `json:"count"`
+	Deleted   bool      `json:"deleted"`
+	CreatedAt time.Time `json:"createdAt"`
+	UpdatedAt time.Time `json:"updatedAt"`
 }

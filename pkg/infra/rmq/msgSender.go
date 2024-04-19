@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"go-practice/pkg/infra/trace"
 
 	"github.com/rabbitmq/amqp091-go"
 )
@@ -25,6 +26,7 @@ func (conn *RMQConnection) SendMessage(
 		fmt.Println("failed to send message")
 		return err
 	}
+	traceId := ctx.Value(trace.ContextKey("traceId"))
 	err = ch.PublishWithContext(ctx,
 		"notifications",
 		"library."+entity+"."+event,
@@ -33,6 +35,9 @@ func (conn *RMQConnection) SendMessage(
 		amqp091.Publishing{
 			ContentType: "text/plain",
 			Body:        body,
+			Headers: amqp091.Table{
+				"traceId": traceId,
+			},
 		})
 	if err != nil {
 		return err

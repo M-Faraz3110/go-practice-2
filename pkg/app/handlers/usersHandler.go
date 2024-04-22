@@ -26,7 +26,7 @@ func (hndl *UsersHandler) CreateUsersHandlerFunc(
 	switch r.Method {
 	case http.MethodPost:
 		{
-			req := dto.CreateUserRequest{}
+			req := dto.CreateUserData{}
 			err := json.NewDecoder(r.Body).Decode(&req)
 			if err != nil {
 				w.WriteHeader(400)
@@ -99,8 +99,45 @@ func (hndl *UsersHandler) UsersHandlerFunc(
 				return
 			}
 		}
-	case http.MethodGet:
+	case http.MethodPatch:
 		{
+			req := strings.TrimPrefix(r.URL.Path, "/users/")
+			reqBody := dto.CreateUserData{}
+			err := json.NewDecoder(r.Body).Decode(&reqBody)
+			if err != nil {
+				w.WriteHeader(400)
+				fmt.Fprintln(w, err.Error())
+				return
+			}
+			if reqBody.Email == nil {
+				w.WriteHeader(400)
+				fmt.Fprintln(w, "attributes missing")
+				return
+			}
+
+			res, err := hndl.svc.UpdateUser(
+				context.TODO(),
+				req,
+				reqBody.Email,
+			)
+			if err != nil {
+				w.WriteHeader(400)
+				fmt.Fprintln(w, err)
+				return
+			}
+
+			resp, err = json.Marshal(dto.User{
+				Id:        res.Id,
+				Email:     res.Email,
+				Deleted:   res.Deleted,
+				CreatedAt: res.CreatedAt,
+				UpdatedAt: res.UpdatedAt,
+			})
+			if err != nil {
+				w.WriteHeader(400)
+				fmt.Fprintln(w, err)
+				return
+			}
 
 		}
 	}

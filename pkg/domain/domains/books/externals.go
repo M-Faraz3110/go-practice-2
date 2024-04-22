@@ -16,9 +16,9 @@ type IRepository interface {
 	Update(
 		ctx context.Context,
 		id string,
-		title string,
-		author string,
-		count int,
+		title *string,
+		author *string,
+		count *int,
 	) (Book, error)
 
 	Delete(

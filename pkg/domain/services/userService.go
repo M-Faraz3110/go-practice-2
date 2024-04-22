@@ -38,6 +38,23 @@ func (svc *UsersService) CreateUser(
 	return res, nil
 }
 
+func (svc *UsersService) UpdateUser(
+	ctx context.Context,
+	id string,
+	email *string,
+) (users.User, error) {
+	res, err := svc.urepo.Update(ctx, id, email)
+	if err != nil {
+		fmt.Println(err)
+		return users.User{}, err
+	}
+	err = svc.msgChannel.SendMessage(ctx, res, "users", "updated")
+	if err != nil {
+		fmt.Println("failed to send message: ", err)
+	}
+	return res, nil
+}
+
 func (svc *UsersService) DeleteUser(
 	ctx context.Context,
 	id string,

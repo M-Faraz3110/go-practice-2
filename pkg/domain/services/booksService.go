@@ -44,6 +44,25 @@ func (svc *BooksService) CreateBook(
 	return res, nil
 }
 
+func (svc *BooksService) UpdateBook(
+	ctx context.Context,
+	id string,
+	title *string,
+	author *string,
+	count *int,
+) (books.Book, error) {
+	res, err := svc.brepo.Update(ctx, id, title, author, count)
+	if err != nil {
+		fmt.Println(err)
+		return books.Book{}, err
+	}
+	err = svc.msgChannel.SendMessage(ctx, res, "books", "updated")
+	if err != nil {
+		fmt.Println("failed to send message: ", err)
+	}
+	return res, nil
+}
+
 func (svc *BooksService) DeleteBook(
 	ctx context.Context,
 	id string,

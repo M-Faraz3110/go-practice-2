@@ -16,7 +16,7 @@ type IRepository interface {
 	Update(
 		ctx context.Context,
 		id string,
-		email string,
+		email *string,
 	) (User, error)
 
 	Delete(

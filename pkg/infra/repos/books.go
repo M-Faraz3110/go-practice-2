@@ -3,8 +3,11 @@ package repos
 import (
 	"context"
 	"database/sql"
+	"fmt"
 	"go-practice/pkg/domain/domains/books"
 	"go-practice/pkg/infra/db"
+	"strconv"
+	"strings"
 	"time"
 
 	uuid "github.com/satori/go.uuid"
@@ -133,11 +136,59 @@ func (b *BooksRepository) Get(
 func (b *BooksRepository) Update(
 	ctx context.Context,
 	id string,
-	title string,
-	auhtor string,
-	count int,
+	title *string,
+	auhtor *string,
+	count *int,
 ) (books.Book, error) {
-	panic("unimplemented")
+	tx, err := b.db.BeginTx(ctx, nil)
+	defer tx.Rollback()
+	if err != nil {
+		return books.Book{}, err
+	}
+
+	time := time.Now().UTC()
+	query := createUpdateQuery(title, auhtor, count)
+	res := tx.QueryRowContext(ctx, query, id, time)
+	book := db.Book{}
+	err = res.Scan(
+		&book.Id,
+		&book.Title,
+		&book.Author,
+		&book.Count,
+		&book.Deleted, &book.CreatedAt, &book.UpdatedAt)
+	if err != nil {
+		return books.Book{}, err
+	}
+	err = tx.Commit()
+	if err != nil {
+		return books.Book{}, err
+	}
+	return books.Book{
+		Id:        book.Id,
+		Title:     book.Title,
+		Author:    book.Author,
+		Count:     book.Count,
+		Deleted:   book.Deleted,
+		CreatedAt: book.CreatedAt,
+		UpdatedAt: book.UpdatedAt,
+	}, nil
+
+}
+
+func createUpdateQuery(title *string, author *string, count *int) string { //dont wanna use reflections and all that to make this more generic cuz its overkill
+	baseQuery := baseUpdateQuery
+	var s []string
+	if title != nil {
+		s = append(s, "title = '"+*title+"'")
+	}
+	if author != nil {
+		s = append(s, "author = '"+*author+"'")
+	}
+	if count != nil {
+		s = append(s, "count = "+strconv.Itoa(*count))
+	}
+	resQuery := fmt.Sprintf(baseQuery, strings.Join(s, ","))
+	return resQuery
 }
 
 // BorrowBook implements books.IRepository.
@@ -157,6 +208,13 @@ func (b *BooksRepository) BorrowBook(
 }
 
 const (
+	baseUpdateQuery = `
+	UPDATE books
+	SET updated_at = $2, %s
+	WHERE id = $1
+	RETURNING *
+	`
+
 	getBookQuery = `
 	SELECT * FROM books
 	WHERE id = $1 

@@ -106,6 +106,49 @@ func (hndl *BooksHandler) BooksHandlerFunc(
 				return
 			}
 		}
+	case http.MethodPatch:
+		{
+			req := strings.TrimPrefix(r.URL.Path, "/books/")
+			reqBody := dto.UpdateBookData{} //check for missing attributes
+			err := json.NewDecoder(r.Body).Decode(&reqBody)
+			if err != nil {
+				w.WriteHeader(400)
+				fmt.Fprintln(w, err.Error())
+				return
+			}
+			if reqBody.Author == nil || reqBody.Title == nil || reqBody.Count == nil {
+				w.WriteHeader(400)
+				fmt.Fprintln(w, "attributes missing")
+				return
+			}
+
+			res, err := hndl.svc.UpdateBook(
+				context.TODO(),
+				req,
+				reqBody.Title,
+				reqBody.Author,
+				reqBody.Count)
+			if err != nil {
+				w.WriteHeader(400)
+				fmt.Fprintln(w, err)
+				return
+			}
+
+			resp, err = json.Marshal(dto.Book{
+				Id:        res.Id,
+				Title:     res.Title,
+				Author:    res.Author,
+				Count:     res.Count,
+				Deleted:   res.Deleted,
+				CreatedAt: res.CreatedAt,
+				UpdatedAt: res.UpdatedAt,
+			})
+			if err != nil {
+				w.WriteHeader(400)
+				fmt.Fprintln(w, err)
+				return
+			}
+		}
 	}
 
 	w.Header().Set("Content-Type", "application/json")

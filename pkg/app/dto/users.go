@@ -2,7 +2,7 @@ package dto
 
 import "time"
 
-type CreateUserRequest struct {
+type CreateUserData struct {
 	Email *string `json:"email"`
 }
 
@@ -12,4 +12,8 @@ type User struct {
 	Deleted   bool      `json:"deleted"`
 	CreatedAt time.Time `json:"createdAt"`
 	UpdatedAt time.Time `json:"updatedAt"`
+}
+
+type UpdateUserData struct {
+	Email *string `json:"email"`
 }

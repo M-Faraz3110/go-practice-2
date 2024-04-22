@@ -11,7 +11,7 @@ type CreateBookData struct {
 type UpdateBookData struct {
 	Title  *string `json:"title"`
 	Author *string `json:"author"`
-	Count  *string `json:"count"`
+	Count  *int    `json:"count"`
 }
 
 type Book struct {

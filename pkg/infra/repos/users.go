@@ -95,9 +95,33 @@ func (u *UsersRepository) Delete(
 func (u *UsersRepository) Update(
 	ctx context.Context,
 	id string,
-	email string,
+	email *string,
 ) (users.User, error) {
-	panic("unimplemented")
+	tx, err := u.db.BeginTx(ctx, nil)
+	defer tx.Rollback()
+	if err != nil {
+		return users.User{}, err
+	}
+	time := time.Now().UTC()
+	res := tx.QueryRowContext(ctx, updateUsersQuery, id, email, time)
+	usr := db.User{}
+	err = res.Scan(
+		&usr.Id,
+		&usr.Email,
+		&usr.Deleted, &usr.CreatedAt, &usr.UpdatedAt)
+	if err != nil {
+		return users.User{}, err
+	}
+	err = tx.Commit()
+	if err != nil {
+		return users.User{}, err
+	}
+	return users.User{
+		Id:        usr.Id,
+		Email:     usr.Email,
+		CreatedAt: usr.CreatedAt,
+		UpdatedAt: usr.UpdatedAt,
+	}, nil
 }
 
 // Get implements users.IRepository.
@@ -130,6 +154,13 @@ const (
 		created_at,
 		updated_at
 	) VALUES ($1, $2, $3, $4)
+	RETURNING *
+	`
+
+	updateUsersQuery = `
+	UPDATE users
+	SET email = $2, updated_at = $3
+	where id = $1
 	RETURNING *
 	`
 
